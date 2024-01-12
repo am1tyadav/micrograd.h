@@ -22,9 +22,17 @@ struct Value {
 };
 
 typedef struct {
-    Value **values;
-    size_t num_values;
+    Value   **values;
+    size_t  num_values;
 } Graph;
+
+typedef struct {
+    size_t  num_inputs;
+    size_t  num_hidden_layers;
+    size_t  *num_neurons;
+    bool    use_activation;
+    // bool    use_output_activation;
+} NetworkConfig;
 
 // Header
 
@@ -35,9 +43,12 @@ void op_add_forward(Value *self);
 void op_add_backward(Value *self);
 void op_mul_forward(Value *self);
 void op_mul_backward(Value *self);
+void op_relu_forward(Value *self);
+void op_relu_backward(Value *self);
 
 Value *op_add(Arena *arena, Value *a, Value *b);
 Value *op_mul(Arena *arena, Value *a, Value *b);
+Value *op_relu(Arena *arena, Value *a);
 
 void _graph_create(Arena *arena, Value *root, Value **visited, size_t *count);
 Graph *graph_create(Arena *arena, Value *root, size_t max_values);
@@ -46,6 +57,11 @@ void graph_backward(Graph *graph);
 void graph_update(Graph *graph, float learning_rate);
 void graph_zero_grad(Graph *graph);
 void graph_optimisation_step(Graph *graph, float learning_rate);
+
+Value **inputs_create(Arena *arena, float *data, size_t num_inputs);
+Value *neuron_create(Arena *arena, Value **inputs, size_t num_inputs, bool use_activation);
+Value **layer_create(Arena *arena, Value **inputs, size_t num_inputs, size_t num_neurons, bool use_activation);
+Value *network_create(Arena *arena, Value **inputs, NetworkConfig config);
 
 void value_print(Value *value);
 void graph_print(Graph *graph);
@@ -94,6 +110,14 @@ void op_mul_backward(Value *self) {
     self->children[1]->grad += self->children[0]->data * self->grad;
 }
 
+void op_relu_forward(Value *self) {
+    self->data = self->children[0]->data > 0 ? self->children[0]->data : 0;
+}
+
+void op_relu_backward(Value *self) {
+    self->children[0]->grad += self->data > 0 ? self->grad : 0;
+}
+
 Value *op_add(Arena *arena, Value *a, Value *b) {
     Value *value = (Value *) arena_allocate(arena, sizeof(Value));
     Value **children = (Value **) arena_allocate(arena, sizeof(Value *) * 2);
@@ -125,6 +149,23 @@ Value *op_mul(Arena *arena, Value *a, Value *b) {
         .children = children,
         .forward = op_mul_forward,
         .backward = op_mul_backward
+    };
+
+    return value;
+}
+
+Value *op_relu(Arena *arena, Value *a) {
+    Value *value = (Value *) arena_allocate(arena, sizeof(Value));
+    Value **children = (Value **) arena_allocate(arena, sizeof(Value *) * 1);
+
+    children[0] = a;
+
+    *value = (Value) {
+        .repr = 'r',
+        .num_children = 1,
+        .children = children,
+        .forward = op_relu_forward,
+        .backward = op_relu_backward
     };
 
     return value;
@@ -210,6 +251,58 @@ void graph_optimisation_step(Graph *graph, float learning_rate) {
     graph_forward(graph);
     graph_backward(graph);
     graph_update(graph, learning_rate);
+}
+
+Value **inputs_create(Arena *arena, float *data, size_t num_inputs) {
+    Value **inputs = (Value **) arena_allocate(arena, sizeof(Value *) * num_inputs);
+
+    for (size_t i = 0; i < num_inputs; i++) {
+        inputs[i] = value_create_constant(arena, data[i]);
+    }
+
+    return inputs;
+}
+
+Value *neuron_create(Arena *arena, Value **inputs, size_t num_inputs, bool use_activation) {
+    Value *bias = value_create_random(arena);
+    bias->repr = 'b';
+
+    for (size_t i = 0; i < num_inputs; i++) {
+        Value *weight = value_create_random(arena);
+        weight->repr = 'w';
+        bias = op_add(arena, bias, op_mul(arena, weight, inputs[i]));
+    }
+
+    if (use_activation) {
+        bias = op_relu(arena, bias);
+    }
+
+    return bias;
+}
+
+Value **layer_create(Arena *arena, Value **inputs, size_t num_inputs, size_t num_neurons, bool use_activation) {
+    Value **neurons = (Value **) arena_allocate(arena, sizeof(Value *) * num_neurons);
+
+    for (size_t i = 0; i < num_neurons; i++) {
+        neurons[i] = neuron_create(arena, inputs, num_inputs, use_activation);
+    }
+
+    return neurons;
+}
+
+Value *network_create(Arena *arena, Value **inputs, NetworkConfig config) {
+    Value **outputs = inputs;
+    size_t num_inputs = config.num_inputs;
+
+    for (size_t i = 0; i < config.num_hidden_layers; i++) {
+        outputs = layer_create(arena, outputs, num_inputs, config.num_neurons[i], config.use_activation);
+        num_inputs = config.num_neurons[i];
+    }
+
+    // Output layer
+    outputs = layer_create(arena, outputs, num_inputs, 1, false);
+
+    return outputs[0];
 }
 
 void value_print(Value *value) {

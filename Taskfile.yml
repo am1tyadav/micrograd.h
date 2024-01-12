@@ -17,3 +17,16 @@ tasks:
   linreg:run:
     dir: ./build
     cmd: ./linear_regression
+
+  nn:
+    cmds:
+      - task: nn:build
+      - task: nn:run
+
+  nn:build:
+    cmd: clang -Wall -std=c17 -o ./build/nn ./nn.c
+
+  nn:run:
+    dir: ./build
+    cmd: ./nn
+  
