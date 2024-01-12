@@ -35,7 +35,7 @@ int main(void) {
     Value *diff = op_add(arena, op_mul(arena, minus_one, y), y_pred);
     Value *loss = op_mul(arena, diff, diff);
 
-    Graph *graph = graph_create(arena, loss, 100);
+    Graph *graph = graph_create(arena, loss, 1000);
 
     size_t num_iterations = 2000;
     size_t log_interval = 200;
