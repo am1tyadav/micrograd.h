@@ -1,0 +1,19 @@
+# https://taskfile.dev
+
+version: 3
+
+tasks:
+  default:
+    cmd: task --list-all
+
+  linreg:
+    cmds:
+      - task: linreg:build
+      - task: linreg:run
+
+  linreg:build:
+    cmd: clang -Wall -std=c17 -o ./build/linear_regression ./linear_regression.c
+
+  linreg:run:
+    dir: ./build
+    cmd: ./linear_regression
