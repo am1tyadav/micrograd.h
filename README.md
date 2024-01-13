@@ -66,3 +66,11 @@ Run the MNIST data example with: `task app=mnist-viz`
 In this example, we visualise MNIST data as a sanity check! Once the application is running, press SPACEBAR to fetch next random sample and ESC to exit visualisation.
 
 ![MNIST-VIZ](./assets/mnist-viz.gif)
+
+## Neural Network Training on MNIST Data
+
+WIP
+
+## Neural Network Inference
+
+WIP

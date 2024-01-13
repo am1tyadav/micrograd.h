@@ -71,5 +71,6 @@ int main(void) {
     }
 
     CloseWindow();
+    arena_destroy(arena);
     return 0;
 }

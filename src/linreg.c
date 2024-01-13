@@ -55,5 +55,6 @@ int main(void) {
     printf("Learned w1 or w2: %f, True w2: %f\n", w2->data, -1.f);
     printf("Learned b: %f, True b: %f\n", b->data, -2.f);
 
+    arena_destroy(arena);
     return 0;
 }

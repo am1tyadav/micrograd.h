@@ -55,5 +55,6 @@ int main(void) {
         }
     }
 
+    arena_destroy(arena);
     return 0;
 }
