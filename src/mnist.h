@@ -118,4 +118,45 @@ MNISTData *load_dataset(Arena *arena, size_t num_examples, const char *images_fi
     return data;
 }
 
+MNISTData *get_zeros_and_ones(Arena *arena, MNISTData *data) {
+    // Create new MNISTData which has only zeros and ones
+    uint32_t num_examples = 0;
+
+    for (size_t i = 0; i < data->num_items; i++) {
+        if (data->labels[i] == 0 || data->labels[i] == 1) {
+            num_examples++;
+        }
+    }
+
+    printf("Found %u number of examples that satisfy criteria\n", num_examples);
+
+    MNISTData *data_slice = (MNISTData *) arena_allocate(arena, sizeof(MNISTData));
+    uint32_t images_size = num_examples * IMAGE_HEIGHT * IMAGE_WIDTH;
+
+    printf("Loading data requires %u bytes\n", images_size);
+
+    data_slice->images = (uint8_t *) arena_allocate(arena, sizeof(uint8_t) * images_size);
+    data_slice->labels = (uint8_t *) arena_allocate(arena, sizeof(uint8_t) * num_examples);
+
+    uint32_t index = 0;
+
+    for (size_t i = 0; i < data->num_items; i++) {
+        if (data->labels[i] == 0 || data->labels[i] == 1) {
+            data_slice->labels[index] = data->labels[i];
+
+            for (size_t j = 0; j < data->num_rows * data->num_cols; j++) {
+                data_slice->images[index * data->num_rows * data->num_cols + j] = data->images[i * data->num_rows * data->num_cols + j];
+            }
+
+            index++;
+        }
+    }
+
+    data_slice->num_cols = data->num_cols;
+    data_slice->num_rows = data->num_rows;
+    data_slice->num_items = num_examples;
+
+    return data_slice;
+}
+
 #endif

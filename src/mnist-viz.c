@@ -28,7 +28,8 @@ int main(void) {
     SetTargetFPS(TARGET_FPS);
 
     Arena *arena = arena_create(100000000);
-    MNISTData *data = load_dataset(arena, NUM_TRAIN_EXAMPLES, TRAIN_IMAGES_FILEPATH, TRAIN_LABELS_FILEPATH);
+    MNISTData *train_data = load_dataset(arena, NUM_TRAIN_EXAMPLES, TRAIN_IMAGES_FILEPATH, TRAIN_LABELS_FILEPATH);
+    MNISTData *data = get_zeros_and_ones(arena, train_data);
     // MNISTData *data = load_dataset(arena, NUM_TEST_EXAMPLES, TEST_IMAGES_FILEPATH, TEST_LABELS_FILEPATH);
     DisplayData display_data = { };
 

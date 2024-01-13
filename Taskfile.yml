@@ -11,7 +11,9 @@ tasks:
   build:
     requires:
       vars: [app]
-    cmd: clang {{ .flags }} -I{{ .include_path }} -L{{ .lib_path }} -lraylib -o ./build/{{ .app }} ./src/{{ .app }}.c
+    cmd: |
+      clang {{ .flags }} -I{{ .include_path }} -L{{ .lib_path }} \
+      -lraylib -o ./build/{{ .app }} ./src/{{ .app }}.c
 
   default:
     requires:
@@ -22,19 +24,20 @@ tasks:
 
   download:mnist: # looping over vars is still an experimental feature in Task
     vars:
-      train_images: train-images-idx3-ubyte
-      train_labels: train-labels-idx1-ubyte
-      test_images: t10k-images-idx3-ubyte
-      test_labels: t10k-labels-idx1-ubyte
+      base_url: http://yann.lecun.com/exdb/mnist
+      train_images: train-images-idx3-ubyte.gz
+      train_labels: train-labels-idx1-ubyte.gz
+      test_images: t10k-images-idx3-ubyte.gz
+      test_labels: t10k-labels-idx1-ubyte.gz
     cmds:
-      - curl http://yann.lecun.com/exdb/mnist/{{ .train_images }}.gz -o ./data/{{ .train_images }}.gz
-      - curl http://yann.lecun.com/exdb/mnist/{{ .train_labels }}.gz -o ./data/{{ .train_labels }}.gz
-      - curl http://yann.lecun.com/exdb/mnist/{{ .test_images }}.gz -o ./data/{{ .test_images }}.gz
-      - curl http://yann.lecun.com/exdb/mnist/{{ .test_labels }}.gz -o ./data/{{ .test_labels }}.gz
-      - gzip -d ./data/{{ .train_images }}.gz
-      - gzip -d ./data/{{ .train_labels }}.gz
-      - gzip -d ./data/{{ .test_images }}.gz
-      - gzip -d ./data/{{ .test_labels }}.gz
+      - curl {{ .base_url }}/{{ .train_images }} -o ./data/{{ .train_images }}
+      - curl {{ .base_url }}/{{ .train_labels }} -o ./data/{{ .train_labels }}
+      - curl {{ .base_url }}/{{ .test_images }} -o ./data/{{ .test_images }}
+      - curl {{ .base_url }}/{{ .test_labels }} -o ./data/{{ .test_labels }}
+      - gzip -d ./data/{{ .train_images }}
+      - gzip -d ./data/{{ .train_labels }}
+      - gzip -d ./data/{{ .test_images }}
+      - gzip -d ./data/{{ .test_labels }}
 
   install:
     cmds:

@@ -21,25 +21,22 @@ int main(void) {
     Value *x1 = value_create_constant(arena, 0);
     Value *x2 = value_create_constant(arena, 0);
     Value *y = value_create_constant(arena, 0);
-    Value *minus_one = value_create_constant(arena, -1);
 
     Value *w1 = value_create_random(arena);
     Value *w2 = value_create_random(arena);
     Value *b = value_create_random(arena);
 
     Value *y_pred = op_add(arena, op_add(arena, op_mul(arena, w1, x1), op_mul(arena, w2, x2)), b);
-    Value *diff = op_add(arena, op_mul(arena, minus_one, y), y_pred);
-    Value *loss = op_mul(arena, diff, diff);
+    Value *loss = loss_mean_squared_error(arena, y, y_pred);
 
     w1->repr = 'w';
     w2->repr = 'w';
     b->repr = 'b';
-    loss->repr = 'l';
 
     Graph *graph = graph_create(arena, loss, 20);
 
     size_t num_iterations = 10000;
-    float learning_rate = 0.003;
+    float learning_rate = 0.3;
 
     for (size_t i = 0; i < num_iterations; i++) {
         x1->data = float_create_random();

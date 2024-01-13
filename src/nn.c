@@ -19,27 +19,26 @@ int main(void) {
 
     Arena *arena = arena_create(8192);
 
-    float input_data[3] = { };
-    Value **inputs = inputs_create(arena, input_data, 3);
+    Value **inputs = inputs_create(arena, 3);
     Value *y = value_create_constant(arena, 0);
-    Value *minus_one = value_create_constant(arena, -1);
 
     NetworkConfig config = {
         .num_inputs = 3,
-        .num_hidden_layers = 2,
-        .num_neurons = (size_t[]) { 2, 2 },
-        .use_activation = true
+        .num_layers = 3,
+        .num_neurons = (size_t[]) { 3, 3, 1 },
+        .hidden_activation = ACT_RELU,
+        .output_activation = ACT_LINEAR
     };
 
-    Value *y_pred = network_create(arena, inputs, config);
-    Value *diff = op_add(arena, op_mul(arena, minus_one, y), y_pred);
-    Value *loss = op_mul(arena, diff, diff);
+    Value **outputs = network_create(arena, inputs, config);
+    Value *y_pred = outputs[0];
+    Value *loss = loss_mean_squared_error(arena, y, y_pred);
 
     Graph *graph = graph_create(arena, loss, 1000);
 
-    size_t num_iterations = 2000;
+    size_t num_iterations = 5000;
     size_t log_interval = 200;
-    float learning_rate = 0.003;
+    float learning_rate = 0.3;
 
     for (size_t i = 0; i < num_iterations; i++) {
         inputs[0]->data = float_create_random();
