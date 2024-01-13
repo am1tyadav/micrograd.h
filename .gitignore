@@ -53,4 +53,7 @@ dkms.conf
 
 build/*
 !build/.gitkeep
+data/*
+!data/.gitkeep
+
 .DS_Store

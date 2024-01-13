@@ -2,31 +2,50 @@
 
 version: 3
 
+vars:
+  flags: -Wall -Werror -std=c17
+  include_path: /opt/homebrew/include
+  lib_path: /opt/homebrew/lib
+
 tasks:
+  build:
+    requires:
+      vars: [app]
+    cmd: clang {{ .flags }} -I{{ .include_path }} -L{{ .lib_path }} -lraylib -o ./build/{{ .app }} ./{{ .app }}.c
+
   default:
+    requires:
+      vars: [app]
+    cmds:
+      - task: build
+      - task: run
+
+  download:mnist: # looping over vars is still an experimental feature in Task
+    vars:
+      train_images: train-images-idx3-ubyte
+      train_labels: train-labels-idx1-ubyte
+      test_images: t10k-images-idx3-ubyte
+      test_labels: t10k-labels-idx1-ubyte
+    cmds:
+      - curl http://yann.lecun.com/exdb/mnist/{{ .train_images }}.gz -o ./data/{{ .train_images }}.gz
+      - curl http://yann.lecun.com/exdb/mnist/{{ .train_labels }}.gz -o ./data/{{ .train_labels }}.gz
+      - curl http://yann.lecun.com/exdb/mnist/{{ .test_images }}.gz -o ./data/{{ .test_images }}.gz
+      - curl http://yann.lecun.com/exdb/mnist/{{ .test_labels }}.gz -o ./data/{{ .test_labels }}.gz
+      - gzip -d ./data/{{ .train_images }}.gz
+      - gzip -d ./data/{{ .train_labels }}.gz
+      - gzip -d ./data/{{ .test_images }}.gz
+      - gzip -d ./data/{{ .test_labels }}.gz
+
+  install:
+    cmds:
+      - brew install raylib
+      - brew install gzip
+
+  list:
     cmd: task --list-all
 
-  linreg:
-    cmds:
-      - task: linreg:build
-      - task: linreg:run
-
-  linreg:build:
-    cmd: clang -Wall -std=c17 -o ./build/linear_regression ./linear_regression.c
-
-  linreg:run:
+  run:
     dir: ./build
-    cmd: ./linear_regression
-
-  nn:
-    cmds:
-      - task: nn:build
-      - task: nn:run
-
-  nn:build:
-    cmd: clang -Wall -std=c17 -o ./build/nn ./nn.c
-
-  nn:run:
-    dir: ./build
-    cmd: ./nn
-  
+    requires:
+      vars: [app]
+    cmd: ./{{ .app }}
