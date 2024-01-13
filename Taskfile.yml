@@ -11,7 +11,7 @@ tasks:
   build:
     requires:
       vars: [app]
-    cmd: clang {{ .flags }} -I{{ .include_path }} -L{{ .lib_path }} -lraylib -o ./build/{{ .app }} ./{{ .app }}.c
+    cmd: clang {{ .flags }} -I{{ .include_path }} -L{{ .lib_path }} -lraylib -o ./build/{{ .app }} ./src/{{ .app }}.c
 
   default:
     requires:

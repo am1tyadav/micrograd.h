@@ -7,9 +7,9 @@ Similar to Andrej Karpathy's [micrograd](https://github.com/karpathy/micrograd) 
 - C compiler
 - [Task](https://taskfile.dev) or user-defined build system
 
-## Examples
+If you're using Task, you can download MNIST data with: `task download:mnist` and if you're using macOS, then the dependencies (raylib and gzip) can be installed with `task install`. 
 
-### Linear Regression
+## Linear Regression
 
 Run the linear regression example with: `task app=linreg`
 
@@ -38,7 +38,7 @@ And finally, the _model_ can be trained with:
 graph_optimisation_step(graph, learning_rate);
 ```
 
-### Neural Network
+## Neural Network
 
 Run the neural network example with: `task app=nn`
 
@@ -59,10 +59,10 @@ Value *y_pred = network_create(arena, inputs, config);
 
 The approach to creating the computation graph and optimising it will remain the same.
 
-### MNIST Data Visualisation
+## MNIST Data Visualisation
 
 Run the MNIST data example with: `task app=mnist-viz`
 
-In this example, we visualise MNIST data as a sanity check! Once the application is running, press Spacebar to fetch next random sample.
+In this example, we visualise MNIST data as a sanity check! Once the application is running, press SPACEBAR to fetch next random sample and ESC to exit visualisation.
 
 ![MNIST-VIZ](./assets/mnist-viz.gif)
