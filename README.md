@@ -38,9 +38,43 @@ And finally, the _model_ can be trained with:
 graph_optimisation_step(graph, learning_rate);
 ```
 
+## MNIST Data Visualisation
+
+Run the MNIST data example with: `task app=mnist-viz`
+
+In this example, we visualise MNIST data (just the 0s and 1s) as a sanity check! Once the application is running, press SPACEBAR to fetch next random sample and ESC to exit visualisation.
+
+![MNIST-VIZ](./assets/mnist_data.gif)
+
+## Logistic Regression with MNIST Data
+
+Run the MNIST Logistic Regression training with: `task app=mnist`
+
+In this example, we train a linear model on 0s and 1s from the MNIST training dataset. Once the model is trained, an inference UI will show up:
+
+![MNIST Logistic Regression](./assets/logistic_regression_mnist.gif)
+
+The model can be created in the following way:
+
+```C
+Value **inputs = inputs_create(arena, input_dim);
+Value *y = value_create_constant(arena, 0);
+
+NetworkConfig config = {
+    .num_inputs = input_dim,
+    .num_layers = 1, // Just the output layer
+    .num_neurons = (size_t[]) { 1 },
+    .output_activation = ACT_SIGMOID
+};
+
+Value **outputs = network_create(arena, inputs, config);
+Value *y_pred = outputs[0];
+Value *loss = loss_mean_squared_error(arena, y, y_pred);
+```
+
 ## Neural Network
 
-Run the neural network example with: `task app=nn`
+(WIP) Run the neural network example with: `task app=nn`
 
 This is similar to the above example except it uses a shallow neural network with 2 hidden layers with 2 hidden units/ neurons each. We can provide a network configuration and use it to create a densely connected network:
 
@@ -48,9 +82,10 @@ This is similar to the above example except it uses a shallow neural network wit
 // Provide network config
 NetworkConfig config = {
     .num_inputs = 3,
-    .num_hidden_layers = 2,
-    .num_neurons = (size_t[]) { 2, 2 },
-    .use_activation = true
+    .num_layers = 3,
+    .num_neurons = (size_t[]) { 3, 3, 1 },
+    .hidden_activation = ACT_RELU,
+    .output_activation = ACT_LINEAR
 };
 
 // Get network output
@@ -58,19 +93,3 @@ Value *y_pred = network_create(arena, inputs, config);
 ```
 
 The approach to creating the computation graph and optimising it will remain the same.
-
-## MNIST Data Visualisation
-
-Run the MNIST data example with: `task app=mnist-viz`
-
-In this example, we visualise MNIST data as a sanity check! Once the application is running, press SPACEBAR to fetch next random sample and ESC to exit visualisation.
-
-![MNIST-VIZ](./assets/mnist-viz.gif)
-
-## Neural Network Training on MNIST Data
-
-WIP
-
-## Neural Network Inference
-
-WIP

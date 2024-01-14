@@ -7,7 +7,7 @@
 
 #include "arena.h"
 
-#define EPSILON     1e-7
+#define EPSILON     0.01
 
 typedef enum {
     ACT_LINEAR,
@@ -57,12 +57,15 @@ void op_relu_forward(Value *self);
 void op_relu_backward(Value *self);
 void op_sigmoid_forward(Value *self);
 void op_sigmoid_backward(Value *self);
+void op_clip_forward(Value *self);
+void op_clip_backward(Value *self);
 
 Value *op_add(Arena *arena, Value *a, Value *b);
 Value *op_mul(Arena *arena, Value *a, Value *b);
 Value *op_relu(Arena *arena, Value *a);
 Value *op_sigmoid(Arena *arena, Value *a);
 Value *op_negate(Arena *arena, Value *a);
+Value *op_clip(Arena *arena, Value *a);
 
 Value *loss_mean_squared_error(Arena *arena, Value *y_true, Value *y_pred);
 
@@ -145,6 +148,15 @@ void op_sigmoid_backward(Value *self) {
     self->children[0]->grad += (self->grad * float_sigmoid(x) / (1.0f - float_sigmoid(x) + EPSILON));
 }
 
+void op_clip_forward(Value *self) {
+    if (self->data > (1 - EPSILON)) self->data = 1 - EPSILON;
+    else if (self->data < EPSILON) self->data = EPSILON;
+}
+
+void op_clip_backward(Value *self) {
+    self->children[0]->grad += self->grad;
+}
+
 Value *op_add(Arena *arena, Value *a, Value *b) {
     Value *value = (Value *) arena_allocate(arena, sizeof(Value));
     Value **children = (Value **) arena_allocate(arena, sizeof(Value *) * 2);
@@ -221,13 +233,30 @@ Value *op_negate(Arena *arena, Value *a) {
     return op_mul(arena, a, minus_one);
 }
 
+Value *op_clip(Arena *arena, Value *a) {
+    Value *value = (Value *) arena_allocate(arena, sizeof(Value));
+    Value **children = (Value **) arena_allocate(arena, sizeof(Value *) * 1);
+
+    children[0] = a;
+
+    *value = (Value) {
+        .repr = 'c',
+        .num_children = 1,
+        .children = children,
+        .forward = op_clip_forward,
+        .backward = op_clip_backward
+    };
+
+    return value;
+}
+
 Value *loss_mean_squared_error(Arena *arena, Value *y_true, Value *y_pred) {
     Value *half = value_create_constant(arena, 0.5);
 
     Value *diff = op_add(arena, y_pred, op_negate(arena, y_true));
     Value *loss = op_mul(arena, op_mul(arena, diff, diff), half);
 
-    loss->repr = 'l';
+    loss->repr = 'L';
     loss->not_trainable = true;
 
     return loss;
@@ -387,7 +416,7 @@ void graph_print(Graph *graph) {
 }
 
 float float_create_random(void) {
-    return (float) rand() * 0.3f / (float) RAND_MAX;
+    return (float) rand() * 0.2f / (float) RAND_MAX;
 }
 
 float float_sigmoid(float x) {

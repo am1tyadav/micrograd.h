@@ -11,7 +11,7 @@
 #define TARGET_FPS  60
 #define PIXEL_SIZE  16
 
-uint8_t inference_image[IMAGE_HEIGHT][IMAGE_WIDTH];
+uint8_t inference_image[IMAGE_HEIGHT][IMAGE_WIDTH] = { };
 
 void initialise_image() {
     for (uint8_t i = 0; i < IMAGE_HEIGHT; i++) {
@@ -29,20 +29,18 @@ int main(void) {
 
     printf("Loading data\n");
 
-    MNISTData *test_data = load_dataset(arena, NUM_TEST_EXAMPLES, TEST_IMAGES_FILEPATH, TEST_LABELS_FILEPATH);
-    MNISTData *data = get_zeros_and_ones(arena, test_data);
+    MNISTData *train_data = load_dataset(arena, NUM_TRAIN_EXAMPLES, TRAIN_IMAGES_FILEPATH, TRAIN_LABELS_FILEPATH);
+    MNISTData *data = get_zeros_and_ones(arena, train_data);
 
-    printf("Creating network\n");
+    printf("Creating model\n");
 
     Value **inputs = inputs_create(arena, input_dim);
     Value *y = value_create_constant(arena, 0);
-    // Value *minus_one = value_create_constant(arena, -1);
 
     NetworkConfig config = {
         .num_inputs = input_dim,
-        .num_layers = 2,
-        .num_neurons = (size_t[]) { 16, 1 },
-        .hidden_activation = ACT_RELU,
+        .num_layers = 1,
+        .num_neurons = (size_t[]) { 1 },
         .output_activation = ACT_SIGMOID
     };
 
@@ -52,17 +50,13 @@ int main(void) {
 
     printf("Creating graph.. this may take a bit\n");
 
-    Graph *graph = graph_create(arena, loss, 300000);
+    Graph *graph = graph_create(arena, loss, 400000);
 
     printf("Final value count = %zu\n", graph->num_values);
 
-    size_t num_iterations = 100 * data->num_items;
+    size_t num_iterations = 2 * data->num_items;
     float learning_rate = 0.0003;
     float epoch_loss = 0;
-    bool do_lr_scheduling = false;
-    size_t lr_schedule = 5 * data->num_items;
-    float lr_factor = 0.5;
-    float lr_minimum = 0.0003;
 
     printf("Starting training.. each epoch will have %u iterations\n", data->num_items);
 
@@ -90,25 +84,11 @@ int main(void) {
             printf("Epoch: %4zu, Loss: %f\n", (i + 1) / data->num_items, epoch_loss / data->num_items);
             epoch_loss = 0;
         }
-
-        if ((i + 1) % lr_schedule == 0 && learning_rate > lr_minimum && do_lr_scheduling) {
-            float new_lr = lr_factor * learning_rate;
-
-            if (new_lr < lr_minimum) {
-                new_lr = lr_minimum;
-            }
-
-            printf("Reducing learning rate from %f to %f\n", learning_rate, new_lr);
-
-            learning_rate = new_lr;
-        }
     }
 
     // Inference starts here
     InitWindow(WINDOW_W, WINDOW_H, "MNIST Inference");
     SetTargetFPS(TARGET_FPS);
-
-    // initialise_image();
 
     while (!WindowShouldClose())
     {
@@ -162,12 +142,15 @@ int main(void) {
 
         char fps_label[10];
         char label[40];
+        char predicted_label[80];
 
         sprintf(fps_label, "FPS: %d", GetFPS());
         sprintf(label, "Prediction: %f", y_pred->data);
+        sprintf(predicted_label, "Predicted Label: %s", y_pred->data < 0.5 ? "0" : "1");
 
         DrawText(fps_label, 800, 400, 20, LIGHTGRAY);
         DrawText(label, 462, 200, 20, LIGHTGRAY);
+        DrawText(predicted_label, 462, 240, 20, LIGHTGRAY);
 
         EndDrawing();
     }
